@@ -10,13 +10,13 @@
   ; 0: you are able to airdash.
   ; 0 to !Setting_AirDash_Cooldown: the cooldown period
 ;Settings
- !Setting_AirDash_Duration = 60
+ !Setting_AirDash_Duration = 10
   ;^How long is the airdash itself.
  !Setting_AirDash_Cooldown = 20
   ;^after airdash have ended, this is how long before you can airdash again.
  !Setting_AirDash_XSpeeds = $30
   ;^Player X speed when airdashing. $01 to $7F with $7F the fastest.
- !Setting_AirDash_CooldownType = 0
+ !Setting_AirDash_CooldownType = 1
   ;^0 = Touching the ground for at least a single frame instantly cools it. This is the
   ;     only way to enable airdash once again.
   ; 1 = 
@@ -49,18 +49,20 @@ main:
 	+
 	LDA !Freeram_AirDashTime		;\Decrement timer
 	BEQ ..NoDecrement			;|
+	if !Setting_AirDash_CooldownType == 0
+		CMP.b #!Setting_AirDash_Cooldown
+		BCC ..NoDecrement
+	endif
 	DEC					;|
 	STA !Freeram_AirDashTime		;/
 	..NoDecrement
-	if !Setting_AirDash_CooldownType == 0
-		LDA $77
-		BIT.b #%00000100
-		BEQ ..NotOnGround
-		LDA #$00
-		STA !Freeram_AirDashTime
-		BRA ..Done
-		..NotOnGround
-	endif
+	LDA $77
+	BIT.b #%00000100
+	BEQ ..NotOnGround
+	LDA #$00
+	STA !Freeram_AirDashTime
+	BRA ..Done
+	..NotOnGround
 	LDA $71
 	;ORA $xxxxxx				;\Custom RAM here to prevent issues with other uberasm tool
 	;ORA $xxxxxx				;/stuff.
@@ -75,26 +77,14 @@ main:
 	..AirDashing				;>cooldown to (!Setting_AirDash_Cooldown+!Setting_AirDash_Duration): airdashing state
 	LDA $77					;\If mario crashes into a surface, cancel it
 	BNE ...CancelAirDashHard		;/
-	...FlyingBackwardsCheck
-	LDY $76
-	LDA $7B
-	BMI ....GoingLeft
-	
-	....GoingRight
-	CPY #$00				;>CPY #$00 needed so that it compares Y instead of A.
-	BEQ ...CancelAirDashHard
-	BRA ....FlyingBackwardsCheckDone
-	
-	....GoingLeft
-	CPY #$00
-	BNE ...CancelAirDashHard
-	
-	....FlyingBackwardsCheckDone
 	
 	STZ $7D					;>No Y speed
 	LDY $76					;\Mario Boost left and right
 	LDA AirDashXSpeeds,y			;|
 	STA $7B					;/
+	LDA.b #%00000011			;\Disable left and right
+	TRB $15					;|
+	TRB $16					;/
 	BRA ..Done
 	
 	...CancelAirDashHard
