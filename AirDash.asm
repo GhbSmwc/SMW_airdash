@@ -82,9 +82,11 @@ main:
 	LDY $76					;\Mario Boost left and right
 	LDA AirDashXSpeeds,y			;|
 	STA $7B					;/
-	LDA.b #%00000011			;\Disable left and right
+	LDA.b #%01000011			;\Disable left and right and dash button for no capespinning
 	TRB $15					;|
 	TRB $16					;/
+	STZ $140D|!addr				;>Disable spinjump.
+	STZ $14A6|!addr				;>Disable cape spin.
 	BRA ..Done
 	
 	...CancelAirDashHard
@@ -130,6 +132,8 @@ main:
 	...NoSmoke
 	LDA #!Setting_AirDash_SoundEffectNumb				;\Sound effects
 	STA !Setting_AirDash_SoundEffectRAM				;/
+	LDA #$0C							;\Long jump pose.
+	STA $72								;/
 	BRA ..AirDashing						;>Immidiately assume the player is airdashing right off the bat.
 	
 	..CoolDown

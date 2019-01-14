@@ -1,0 +1,110 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: #000207;
+			color: white;
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+		</style>
+	</head>
+<body>
+<center><h1>Airdash</h1></center><br>
+<center>By GreenHammerBro</center><br>
+<hr>
+This simple uberasm tool code enables the player to perform airdash, a move inspired by some platforming games
+that flings the player character horizontally straight for a short distant in the air.
+<hr>
+<h2>Insertion</h2>
+Note: labels and defines here are case sesitive.
+<ol>
+<li>Edit the defines as necessary in <tt>AirDash.asm</tt>.</li>
+<li>Place <tt>AirDash.asm</tt> in any of these ways (pick one):</li>
+<ul>
+<li>All levels
+<ol>
+<li>in as <tt>Gamemode 14</tt> (in the <tt>gamemode</tt> folder) for all levels and in the <tt>list.txt</tt> file,
+paste this text:
+<table><tr><td><pre>gamemode:
+; Insert files here
+14		AirDash.asm</pre></td></tr></table></li>
+<li>Paste whats in this package's <tt>routines</tt> folder into uberasm tool's equivalent <tt>library</tt> folder.</li>
+</ol>
+</li>
+<li>Specific levels</li>
+<ol>
+<li>Paste <tt>AirDash.asm</tt> in <tt>library</tt>, then open that copy and change the label <tt>main:</tt>
+to <tt>AirDashMain:</tt>.</li>
+<li>Create level files that you want to use the airdash for and put them in the <tt>level</tt> folder in uberasm tool. Then simply call the
+airdash code like this (this must run as <tt>main:</tt>):
+<table><tr><td><pre>main:
+	;...
+	JSL AirDash_AirDashMain
+	;...
+	RTL</pre></td></tr></table>
+Be sure to pay attention to the jumps and branches so that the game's handling does not unintentionally skip this, causing the airdash to not work, if you have
+other codes in the same level file.
+</li>
+<li>Unfortunately at the time of making this, uberasm tool version 1.3 (11-22-2018) does not support a library routine file containing a <tt>JSL</tt> to
+another library routine file, thus go to this package directory: <tt>routines/GenerateSmoke.asm</tt>, copy its entire code, and paste it <b>after the <tt>RTL</tt></b> so that
+the main code does not end up accidentally executing this when it shouldn't. Then change <nobr><tt>JSL GenerateSmoke_Smoke</tt></nobr> to <nobr><tt>JSL Smoke</tt></nobr>
+so that the routine call works with the in-file routine.</li>
+</ol>
+</ul>
+<li>Now run the tool to insert the gimmick.</li>
+</ol>
+<hr>
+<h2>Combining with <a href="https://www.smwcentral.net/?p=section&a=details&id=14759">Airjump</a></h2>
+Perhaps you want a gimmicky hack involving using a combination of airjumping and dashing in platforming levels.<br><br>
+
+Note that this assumes you are using airjump version that was submitted at 01-03-2017, you may have to edit it should a newer version exist that you need to use.
+
+To insert:
+<ol>
+<li>Depending on how you perfer &ldquo;All levels&rdquo; or &ldquo;Specific Levels&rdquo;:</li>
+<ul>
+<li>All levels:</li>
+<ol>
+<li>Remove the <tt>RTL</tt> at the bottom of <tt>AirDash.asm</tt> and paste the entire airjump code (everything, including defines) below it.</li>
+</ol>
+<li>Specific levels:</li>
+<ol>
+<li>Perhaps you want either of them enabled in levels individually, have your level file like this:
+<table><tr><td><pre>main:
+	;...
+	JSL AirDash_AirDashMain ;\Make sure you have an RTL at the end of their codes.
+	JSL Airjump_AirjumpMain ;/
+	;...
+</pre></td></tr></table></li>
+<li>Move <tt>Airjump.asm</tt> to the <tt>library</tt> folder, edit the <tt>main:</tt> label to <tt>AirjumpMain:</tt>.</li>
+</ol>
+</ul>
+<li>Edit the define <nobr><tt>!Freeram_JumpCountLeft</tt></nobr> to not use the same RAM address <nobr><tt>!Freeram_AirDashTime</tt></nobr> is using.</li>
+<li>Edit this airjump code to prevent weirdness when the player airjumps during an airdash:
+<table><tr><td><pre>	..BothJumps
+	LDA #$0B			;\Jump pose (replaces long jump pose)
+	STA $72				;/
+	BRA ..Return			;>In case if you have code below.
+</pre></td></tr></table>
+changed to:
+<table><tr><td><pre>	..BothJumps
+	LDA #$0B			;\Jump pose (replaces long jump pose)
+	STA $72				;/
+	LDA.b #!Setting_AirDash_Cooldown	;\If player jumps while airdashing, cancel airdash
+	CMP !Freeram_AirDashTime		;|but don't instant cooldown.
+	BCS ..Return				;|
+	STA !Freeram_AirDashTime		;/
+	BRA ..Return			;>In case if you have code below.
+</pre></td></tr></table>
+Now keep in mind that this will cause <nobr><tt>!Freeram_AirDashTime</tt></nobr> to be written when <nobr><tt>!Freeram_AirDashTime</tt></nobr> is a value &ge; the
+value <nobr><tt>!Setting_AirDash_Cooldown</tt></nobr> even when you're not using the airdash but using the airjump code. So while it is not used
+by the airdash code, it is not recommended to re-use this RAM address when any of the two <tt>air&lt;perform move&gt;</tt> are in effect.
+</li>
+<li>Copy all the defines in <tt>AirDash.asm</tt> at the top and paste them in <tt>Airjump.asm</tt>. Make sure their settings matches up (up to date) if you change
+any of them. This is due to uberasm tool's library defines gets &ldquo;forgotten&rdquo; when processing levels.</li>
+</ol>
