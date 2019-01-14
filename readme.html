@@ -108,3 +108,10 @@ by the airdash code, it is not recommended to re-use this RAM address when any o
 <li>Copy all the defines in <tt>AirDash.asm</tt> at the top and paste them in <tt>Airjump.asm</tt>. Make sure their settings matches up (up to date) if you change
 any of them. This is due to uberasm tool's library defines gets &ldquo;forgotten&rdquo; when processing levels.</li>
 </ol>
+<hr>
+<h2>Notes</h2>
+<ul>
+<li>Be careful that airdash relies on the player's facing direction (<tt>$7E0076</tt>) to determine which way the player is flinging, if anything sets this value during
+airdash, will cause the player to &rdquo;turn around&rdquo;. An example of this is when touching sprites (such as non-blue shell-less koopas after knocked out of their
+shells and a fish out of water) that are stunned.</li>
+</<ul>
